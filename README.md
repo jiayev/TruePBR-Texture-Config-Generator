@@ -8,15 +8,6 @@ A simple tool to generate a texture config file for TruePBR, to be used with Par
 
 2. Make sure you have Python 3 installed. You'll need PyQT5, so run `pip install pyqt5` if you don't have it.
 
-parser.add_argument('-n', '--mod_name', required=True, help='The name of the mod.')
-    parser.add_argument('-s', '--submod_name', help='Name of the submod (optional).')
-    parser.add_argument('-d', '--suffix', nargs='?', const='_d', default='', help='Diffuse suffix for the texture group (optional).')
-    parser.add_argument('-p', '--path', help='Path to the mod folder.')
-    parser.add_argument('-f', '--suffix_filter', help='Filter for the suffix of the texture group.')
-    # Add an argument "override" to specifically set the settings in json file
-    # e.g. -o "parallax=True,displacement_scale=1.0..."
-    parser.add_argument('-o', '--override', help='Override settings for the texture group.')
-
 3. Run the tool with `python3 genpatch2.py`, with the following arguments:
 
 - `-n` or `--mod_name`: The name of the mod. Mandatory.
