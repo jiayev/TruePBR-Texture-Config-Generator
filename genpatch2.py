@@ -137,29 +137,32 @@ def create_texture_group_json(texture_group, main_group=None, override=None):
             # "lock_diffuse": True,
             "slot2": "textures\\pbr\\" + main_group['n_path'].replace("/", "\\"),
             # "slot4": "textures\\pbr\\" + main_group.get('p_path', '').replace("/", "\\"),
-            "slot6": "textures\\pbr\\" + main_group['rmaos_path'].replace("/", "\\"),
+            # "slot6": "textures\\pbr\\" + main_group['rmaos_path'].replace("/", "\\"),
         }
-        if 'g_path' in main_group:
+        if 'g_path' in main_group and 'g_path' not in texture_group:
             full_g_path = "textures\\pbr\\" + main_group.get('g_path', '').replace("/", "\\")
             texture_data['slot3'] = full_g_path
-        if 'p_path' in main_group:
+        if 'p_path' in main_group and 'p_path' not in texture_group:
             full_p_path = "textures\\pbr\\" + main_group.get('p_path', '').replace("/", "\\")
             texture_data['slot4'] = full_p_path
-        if 's_path' in main_group:
+        if 's_path' in main_group and 's_path' not in texture_group:
             full_s_path = "textures\\pbr\\" + main_group.get('s_path', '').replace("/", "\\")
             texture_data['slot8'] = full_s_path
-        if 'cnr_path' in main_group:
+        if 'rmaos_path' not in texture_group:
+            full_rmaos_path = "textures\\pbr\\" + main_group['rmaos_path'].replace("/", "\\")
+            texture_data['slot6'] = full_rmaos_path
+        if 'cnr_path' in main_group and 'cnr_path' not in texture_group:
             texture_data['subsurface'] = False
             full_cnr_path = "textures\\pbr\\" + main_group['cnr_path'].replace("/", "\\")
             texture_data['slot7'] = full_cnr_path
         if suffix:
             texture_data['rename'] = texture_root.replace("/", "\\")
-        if 'coat_path' in main_group:
+        if 'coat_path' in main_group and 'coat_path' not in texture_group:
             texture_data['subsurface'] = False
             texture_data['multilayer'] = True
             full_n_path = "textures\\pbr\\" + main_group['n_path'].replace("/", "\\")
             full_coat_path = "textures\\pbr\\" + main_group['coat_path'].replace("/", "\\")
-            if 'cnr_path' not in main_group:
+            if 'cnr_path' not in main_group and 'cnr_path' in texture_group:
                 texture_data['slot7'] = full_n_path
             texture_data['slot8'] = full_coat_path
     else:
