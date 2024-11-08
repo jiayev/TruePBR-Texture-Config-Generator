@@ -212,6 +212,11 @@ def create_texture_group_json(texture_group, main_group=None, override=None):
                     value = float(value)
                 except ValueError:
                     pass
+                # If the value is a string, convert it to a boolean if it is "True" or "False"
+                if value == "True" or value == "true":
+                    value = True
+                elif value == "False" or value == "false":
+                    value = False
                 override_dict[key] = value
             texture_data.update(override_dict)
         except Exception as e:
