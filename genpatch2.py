@@ -15,6 +15,24 @@ from PyQt5.QtWidgets import QApplication, QWidget, QTreeWidget, QTreeWidgetItem,
 from PyQt5.QtCore import Qt, QMimeData
 from PyQt5.QtGui import QDrag, QColor
 
+class CustomTreeWidget(QTreeWidget):
+    def __init__(self):
+        super().__init__()
+        
+    def dropEvent(self, event):
+        item = self.currentItem()
+        selected_items = self.selectedItems()
+        old_parent = item.parent()
+        
+        super().dropEvent(event)
+        
+        new_parent = item.parent()
+        
+        if old_parent != new_parent and new_parent is not None:
+            for selected_item in selected_items:
+            # yellow is too bright, use a darker color
+                selected_item.setForeground(0, QColor(100, 200, 0))
+
 class TextureGroupOrganizer(QWidget):
     def __init__(self, texture_groups):
         super().__init__()
@@ -27,7 +45,7 @@ class TextureGroupOrganizer(QWidget):
 
         layout = QVBoxLayout()
 
-        self.tree = QTreeWidget()
+        self.tree = CustomTreeWidget()
         self.tree.setHeaderLabels(['Texture Sets'])
         self.tree.setDragEnabled(True)
         self.tree.setAcceptDrops(True)
@@ -60,6 +78,9 @@ class TextureGroupOrganizer(QWidget):
                 item.setForeground(0, QColor('blue'))  # Set color for Main
                 self.tree.addTopLevelItem(item)
                 main_items[name] = item
+                if group['is_n_main']:
+                    item.setForeground(0, QColor('purple'))  # Set color for N Main
+                    item.setText(0, f"{name} (Main Normal)")
             else:
                 sub_item = QTreeWidgetItem([f"{name} (Sub)"])
                 closest_main = self.find_closest_main(name)
@@ -92,6 +113,14 @@ class TextureGroupOrganizer(QWidget):
         return previous_row[-1]
 
     def confirm(self):
+        # If any sub item is not under a main item, notice the user and do not close the window
+        for i in range(self.tree.topLevelItemCount()):
+            main_item = self.tree.topLevelItem(i)
+            for j in range(main_item.childCount()):
+                sub_item = main_item.child(j)
+                if sub_item.foreground(0).color() == QColor('red'):
+                    print("Please categorize all sub items under a main item.")
+                    return
         self.update_texture_groups()
         self.close()
 
@@ -104,6 +133,7 @@ class TextureGroupOrganizer(QWidget):
             main_name = re.match(r"(.+?) \(", main_item.text(0)).group(1)
             for j in range(main_item.childCount()):
                 sub_item = main_item.child(j)
+                # sub_item.setForeground(0, QColor('yellow'))  # Set color for updated Sub
                 sub_name = re.match(r"(.+?) \(", sub_item.text(0)).group(1)
                 self.texture_groups[sub_name]['main'] = main_name
 
@@ -190,6 +220,10 @@ def create_texture_group_json(texture_group, main_group=None, override=None, ove
             "displacement_scale": 0.5,
             "smooth_angle": 70.0,
         }
+        if 'd_path' not in texture_group:
+            texture_data['match_normal'] = texture_root.replace("/", "\\")
+            # remove "texture" key
+            texture_data.pop("texture")
         if suffix:
             texture_data['rename'] = texture_root.replace("/", "\\")
         if 'coat_path' in texture_group:
@@ -278,13 +312,14 @@ def main(mod_name, submod_name=None, suffix='', path=None, suffix_filter=None, o
         else:
             name = file_name
         if name not in texture_groups:
-            texture_groups[name] = {'name': name, 'is_main': False, 'main': None}
+            texture_groups[name] = {'name': name, 'is_main': False, 'main': None, 'is_n_main': True}
             if suffix and (not suffix_filter or suffix_filter in file_path):
                 texture_groups[name]['suffix'] = suffix
                 print(f"Suffix for {name}: {suffix}")
             print(f"New group: {name}")
         if name + '.dds' in texture_files:
             texture_groups[name]['d_path'] = name + '.dds'
+            texture_groups[name]['is_n_main'] = False
         if name + '_n.dds' in texture_files:
             texture_groups[name]['n_path'] = name + '_n.dds'
             texture_groups[name]['is_main'] = True
@@ -324,9 +359,9 @@ def main(mod_name, submod_name=None, suffix='', path=None, suffix_filter=None, o
     print(f"Found {len(main_groups)} main groups.")
     
     for group_name, group in texture_groups.items():
-        if group['is_main']:
+        if group['is_main'] and not group['is_n_main']:
             json_data.append(create_texture_group_json(group, None, override, override_filter))
-        elif group['main']:
+        elif group['main'] and not group['is_main']:
             main_group = texture_groups[group['main']]
             json_data.append(create_texture_group_json(group, main_group, override, override_filter))
 
