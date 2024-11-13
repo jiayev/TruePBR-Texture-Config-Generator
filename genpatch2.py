@@ -115,7 +115,7 @@ class TextureGroupOrganizer(QWidget):
         return self.texture_groups
 
 # Helper function to create JSON object for a texture group
-def create_texture_group_json(texture_group, main_group=None, override=None):
+def create_texture_group_json(texture_group, main_group=None, override=None, override_filter=None):
     texture_root = texture_group['name']
     suffix = texture_group.get('suffix', '')
     if main_group:
@@ -162,7 +162,15 @@ def create_texture_group_json(texture_group, main_group=None, override=None):
             texture_data['multilayer'] = True
             full_n_path = "textures\\pbr\\" + main_group['n_path'].replace("/", "\\")
             full_coat_path = "textures\\pbr\\" + main_group['coat_path'].replace("/", "\\")
-            if 'cnr_path' not in main_group and 'cnr_path' in texture_group:
+            if 'cnr_path' not in main_group and 'cnr_path' not in texture_group:
+                texture_data['slot7'] = full_n_path
+            texture_data['slot8'] = full_coat_path
+        elif 'coat_path' in texture_group:
+            texture_data['subsurface'] = False
+            texture_data['multilayer'] = True
+            full_n_path = "textures\\pbr\\" + main_group['n_path'].replace("/", "\\")
+            full_coat_path = "textures\\pbr\\" + texture_group['coat_path'].replace("/", "\\")
+            if 'cnr_path' not in texture_group:
                 texture_data['slot7'] = full_n_path
             texture_data['slot8'] = full_coat_path
     else:
@@ -201,7 +209,7 @@ def create_texture_group_json(texture_group, main_group=None, override=None):
         texture_data['coat_normal'] = True
     
     # Override settings
-    if override:
+    if override and (not override_filter or override_filter in texture_root):
         # First check if override is valid
         try:
             override_dict = {}
@@ -226,7 +234,7 @@ def create_texture_group_json(texture_group, main_group=None, override=None):
     return texture_data
 
 # Main function to process directories and files
-def main(mod_name, submod_name=None, suffix='', path=None, suffix_filter=None, override=None):
+def main(mod_name, submod_name=None, suffix='', path=None, suffix_filter=None, override=None, override_filter=None):
     app = QApplication(sys.argv)
     # Initialize paths
     if not path:
@@ -315,10 +323,10 @@ def main(mod_name, submod_name=None, suffix='', path=None, suffix_filter=None, o
     
     for group_name, group in texture_groups.items():
         if group['is_main']:
-            json_data.append(create_texture_group_json(group, None, override))
+            json_data.append(create_texture_group_json(group, None, override, override_filter))
         elif group['main']:
             main_group = texture_groups[group['main']]
-            json_data.append(create_texture_group_json(group, main_group, override))
+            json_data.append(create_texture_group_json(group, main_group, override, override_filter))
 
     print(json_data)
 
@@ -345,6 +353,7 @@ if __name__ == "__main__":
     # Add an argument "override" to specifically set the settings in json file
     # e.g. -o "parallax=True,displacement_scale=1.0..."
     parser.add_argument('-o', '--override', help='Override settings for the texture group.')
+    parser.add_argument('-r', '--override_filter', help='Filter for the override settings.')
 
     args = parser.parse_args()
-    main(args.mod_name, args.submod_name, args.suffix, args.path, args.suffix_filter, args.override)
+    main(args.mod_name, args.submod_name, args.suffix, args.path, args.suffix_filter, args.override, args.override_filter)
