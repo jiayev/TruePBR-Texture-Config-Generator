@@ -214,6 +214,8 @@ def create_texture_group_json(texture_group, main_group=None, override=None, ove
         try:
             override_dict = {}
             for setting in override.split(","):
+                # For space trimming
+                setting = setting.strip()
                 key, value = setting.split("=")
                 # If the value can be converted to a float, do so
                 try:
