@@ -152,10 +152,10 @@ def create_texture_group_json(texture_group, main_group=None, override=None, ove
         # If it is a secondary group, derive from the main group
         texture_data = {
             "texture": texture_root.replace("/", "\\") + suffix,
-            "emissive": 'g_path' in main_group,
-            "parallax": 'p_path' in main_group,
-            "subsurface": 's_path' in main_group,
-            "multilayer": 'cnr_path' in main_group,
+            "emissive": 'g_path' in main_group or 'g_path' in texture_group,
+            "parallax": 'p_path' in main_group or 'p_path' in texture_group,
+            "subsurface": 's_path' in main_group or 's_path' in texture_group,
+            "multilayer": 'cnr_path' in main_group or 'cnr_path' in texture_group,
             "subsurface_foliage": False,
             "specular_level": 0.04,
             "subsurface_color": [1, 1, 1],
@@ -286,6 +286,7 @@ def main(mod_name, submod_name=None, suffix='', path=None, suffix_filter=None, o
     texture_files = []
     for root, dirs, files in os.walk(base_path):
         for file in files:
+            # file = file.lower()
             if file.endswith('.dds'):
                 file_path = os.path.relpath(os.path.join(root, file), base_path) 
                 if submod_name and submod_name not in file_path:
